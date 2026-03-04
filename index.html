@@ -12,18 +12,17 @@
       --soft: rgba(255,255,255,.86);
       --muted: rgba(255,255,255,.70);
 
-      --a: #ffffff;   /* neutral */
-      --b: #f6f0ff;   /* soft violet */
-      --c: #ffe9e9;   /* soft rose */
-      --d: #fff6df;   /* warm */
-      --e: #dff7ff;   /* calm cyan */
+      --a: #ffffff;
+      --b: #f6f0ff;
+      --c: #ffe9e9;
+      --d: #fff6df;
+      --e: #dff7ff;
     }
 
     *{ box-sizing:border-box; }
     html,body{ height:100%; margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
     body{ background: var(--bg); color: white; overflow:hidden; }
 
-    /* Fullscreen stage */
     .stage{
       position:fixed; inset:0;
       display:grid; place-items:center;
@@ -31,7 +30,6 @@
                   linear-gradient(180deg, #060815, #02030a);
     }
 
-    /* Video layer */
     .videoWrap{
       position:absolute; inset:0;
       display:grid; place-items:center;
@@ -52,59 +50,6 @@
       pointer-events:none;
     }
 
-    /* Start overlay */
-    .startOverlay{
-      position:absolute; inset:0;
-      display:grid; place-items:center;
-      padding:24px;
-      text-align:center;
-      z-index:10;
-      background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.75));
-      backdrop-filter: blur(6px);
-    }
-    .card{
-      width:min(720px, 92vw);
-      border: 1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.06);
-      border-radius: 18px;
-      padding: 22px 18px;
-      box-shadow: 0 20px 70px rgba(0,0,0,.45);
-    }
-    .title{
-      font-size: clamp(22px, 3.2vw, 34px);
-      letter-spacing:.3px;
-      margin:0 0 8px;
-    }
-    .subtitle{
-      margin:0 0 18px;
-      color: var(--muted);
-      line-height:1.45;
-      font-size: 15px;
-    }
-    .btnRow{
-      display:flex; gap:10px; justify-content:center; flex-wrap:wrap;
-    }
-    button{
-      appearance:none; border:0;
-      border-radius: 999px;
-      padding: 12px 16px;
-      font-weight:650;
-      cursor:pointer;
-      transition: transform 120ms ease, opacity 120ms ease;
-    }
-    button:hover{ transform: translateY(-1px); }
-    button:active{ transform: translateY(0px); opacity:.92; }
-    .primary{
-      background: rgba(255,255,255,.92);
-      color: #0b1020;
-    }
-    .ghost{
-      background: rgba(255,255,255,.10);
-      color: rgba(255,255,255,.92);
-      border: 1px solid rgba(255,255,255,.18);
-    }
-
-    /* White fade + text scene */
     .afterScene{
       position:absolute; inset:0;
       display:grid; place-items:center;
@@ -159,7 +104,6 @@
     .cD{ color: #7a5200; }
     .cE{ color: #0a4a5a; }
 
-    /* Subtle “heavenly” motion */
     .particles{
       position:absolute; inset:0;
       opacity:0;
@@ -174,7 +118,7 @@
       background: rgba(255,255,255,.85);
       box-shadow: 0 0 20px rgba(255,255,255,.55);
       animation: floatUp linear infinite;
-      opacity:.0;
+      opacity:0;
     }
     @keyframes floatUp{
       0%{ transform: translateY(30px); opacity:0; }
@@ -183,7 +127,25 @@
       100%{ transform: translateY(-220px); opacity:0; }
     }
 
-    /* Reduced motion */
+    /* Tiny sound button (only if needed) */
+    .soundBtn{
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      z-index: 50;
+      border: 1px solid rgba(255,255,255,.22);
+      background: rgba(255,255,255,.10);
+      color: rgba(255,255,255,.92);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 650;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      display:none;
+    }
+    .soundBtn:hover{ transform: translateY(-1px); }
+    .soundBtn:active{ transform: translateY(0); opacity:.92; }
+
     @media (prefers-reduced-motion: reduce){
       .videoWrap, .afterScene, .whiteFade, .glow, .line{ transition:none !important; animation:none !important; }
     }
@@ -192,25 +154,8 @@
 <body>
   <div class="stage" id="stage">
 
-    <div class="startOverlay" id="startOverlay">
-      <div class="card">
-        <h1 class="title">Video starten</h1>
-        <p class="subtitle">
-          Dein Browser erlaubt Ton/Autoplay meist erst nach einem Klick.
-          Danach läuft alles automatisch: Video → Atmosphäre → Weißblende → Textsequenz.
-        </p>
-        <div class="btnRow">
-          <button class="primary" id="startBtn">Start</button>
-          <button class="ghost" id="startMutedBtn">Start (ohne Ton)</button>
-        </div>
-        <p class="subtitle" style="margin-top:14px;font-size:13px;">
-          Dateien neben <code>index.html</code>: <code>campaign.mp4</code> und <code>atmo.mp3</code>
-        </p>
-      </div>
-    </div>
-
     <div class="videoWrap" id="videoWrap" aria-hidden="true">
-      <video id="vid" playsinline preload="auto">
+      <video id="vid" playsinline preload="auto" muted>
         <source src="campaign.mp4" type="video/mp4" />
       </video>
       <div class="vignette"></div>
@@ -219,25 +164,19 @@
     <div class="afterScene" id="afterScene" aria-hidden="true">
       <div class="whiteFade" id="whiteFade"></div>
       <div class="glow" id="glow"></div>
-
       <div class="particles" id="particles"></div>
-
-      <div class="textWrap" id="textWrap">
-        <!-- Lines will be injected -->
-      </div>
+      <div class="textWrap" id="textWrap"></div>
     </div>
 
-    <audio id="atmo" preload="auto" loop>
+    <audio id="atmo" preload="auto">
       <source src="atmo.mp3" type="audio/mpeg" />
     </audio>
 
   </div>
 
-  <script>
-    const startOverlay = document.getElementById('startOverlay');
-    const startBtn = document.getElementById('startBtn');
-    const startMutedBtn = document.getElementById('startMutedBtn');
+  <button class="soundBtn" id="soundBtn">Sound an</button>
 
+  <script>
     const videoWrap = document.getElementById('videoWrap');
     const vid = document.getElementById('vid');
 
@@ -248,11 +187,10 @@
 
     const atmo = document.getElementById('atmo');
     const particles = document.getElementById('particles');
+    const soundBtn = document.getElementById('soundBtn');
 
-    // --- EDIT YOUR TEXT HERE ---
-    // I’m leaving this neutral (no direct voting persuasion).
-    // Replace with your own wording.
-    const LINES = 
+    // --- YOUR TEXT (fixed array syntax) ---
+    const LINES = [
       { text: "Das war das Kampagnenvideo der Freien Demokratischen Partei zur Bundestagswahl 2025.", cls: "big cA", delay: 800 },
       { text: "Auch ich bin Mitglied der FDP und wählte damals die Liberalen.", cls: "mid cE", delay: 2200 },
       { text: "Doch in der Bundestagswahl 2025, fielen wir unter die 5% Hürde. Wir wurden somit aus dem Bundestag herraus geworfen.", cls: "small cA", delay: 3800 },
@@ -280,7 +218,7 @@
         const p = document.createElement('div');
         p.className = "particle";
         const left = Math.random() * 100;
-        const top = 70 + Math.random()*30; // start near bottom
+        const top = 70 + Math.random()*30;
         const dur = 6 + Math.random()*6;
         const delay = Math.random()*3;
         const size = 3 + Math.random()*6;
@@ -294,44 +232,66 @@
       }
     }
 
-    async function startFlow({mutedVideo}){
-      // Prep
-      startOverlay.style.display = "none";
-
+    async function startFlow(){
       // Video fade in
-      vid.muted = !!mutedVideo;  // muted helps autoplay reliability
-      vid.currentTime = 0;
-
-      videoWrap.style.pointerEvents = "auto";
       videoWrap.style.opacity = "1";
 
+      // Autoplay reliability: start muted.
+      vid.muted = true;
+      vid.currentTime = 0;
+
+      // Try to play
       try{
         await vid.play();
       }catch(e){
-        // If play still fails, show a minimal fallback click-to-play
-        startOverlay.style.display = "grid";
-        startOverlay.querySelector('.title').textContent = "Zum Starten klicken";
-        startOverlay.querySelector('.subtitle').textContent =
-          "Autoplay wurde blockiert. Bitte erneut klicken.";
-        return;
+        // If autoplay fails completely, allow a single click anywhere to start.
+        const clickStart = async () => {
+          document.removeEventListener('pointerdown', clickStart);
+          try{ await vid.play(); }catch(_){}
+        };
+        document.addEventListener('pointerdown', clickStart, { once:true });
       }
 
-      // Wait for video end
-      await new Promise(resolve => {
-        vid.addEventListener('ended', resolve, { once:true });
-      });
+      // Offer sound enable (optional)
+      soundBtn.style.display = "block";
+      soundBtn.addEventListener('click', async () => {
+        // This click counts as a user gesture; now audio/video unmute is allowed.
+        try{
+          vid.muted = false;
+        }catch(_){}
+        soundBtn.style.display = "none";
+      }, { once:true });
 
-      // Start ambience (loop)
+      // Wait for video end
+      await new Promise(resolve => vid.addEventListener('ended', resolve, { once:true }));
+
+      // Try to play ambience (may be blocked unless user clicked Sound an / anywhere)
+      let atmoPlayed = false;
       try{
         atmo.currentTime = 0;
         await atmo.play();
+        atmoPlayed = true;
       }catch(e){
-        // If audio blocked, user can still proceed silently.
+        // If blocked, show button again to enable and play.
+        soundBtn.textContent = "Sound an";
+        soundBtn.style.display = "block";
+        soundBtn.onclick = async () => {
+          soundBtn.style.display = "none";
+          try{
+            atmo.currentTime = 0;
+            await atmo.play();
+            atmoPlayed = true;
+          }catch(_){}
+        };
+      }
+
+      // If the audio is playing, wait until it ends; otherwise continue immediately.
+      if (atmoPlayed){
+        await new Promise(resolve => atmo.addEventListener('ended', resolve, { once:true }));
       }
 
       // Transition to white / text
       afterScene.style.opacity = "1";
-      afterScene.style.pointerEvents = "auto";
       whiteFade.style.opacity = "1";
       glow.style.opacity = "1";
 
@@ -352,14 +312,7 @@
       }
     }
 
-    startBtn.addEventListener('click', () => startFlow({ mutedVideo:false }));
-    startMutedBtn.addEventListener('click', () => startFlow({ mutedVideo:true }));
-
-    // If the atmo audio ends for any reason, enforce looping
-    atmo.addEventListener('ended', () => {
-      atmo.currentTime = 0;
-      atmo.play().catch(()=>{});
-    });
+    window.addEventListener('DOMContentLoaded', startFlow);
   </script>
 </body>
 </html>
