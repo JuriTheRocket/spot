@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kampagnenvideo</title>
+  <style>
+    :root{
+      --bg: #05070c;
+      --ink: #0b1020;
+      --white: #ffffff;
+      --soft: rgba(255,255,255,.86);
+      --muted: rgba(255,255,255,.70);
+
+      --a: #ffffff;   /* neutral */
+      --b: #f6f0ff;   /* soft violet */
+      --c: #ffe9e9;   /* soft rose */
+      --d: #fff6df;   /* warm */
+      --e: #dff7ff;   /* calm cyan */
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    body{ background: var(--bg); color: white; overflow:hidden; }
+
+    /* Fullscreen stage */
+    .stage{
+      position:fixed; inset:0;
+      display:grid; place-items:center;
+      background: radial-gradient(1200px 800px at 50% 30%, rgba(255,255,255,.06), transparent 60%),
+                  linear-gradient(180deg, #060815, #02030a);
+    }
+
+    /* Video layer */
+    .videoWrap{
+      position:absolute; inset:0;
+      display:grid; place-items:center;
+      opacity:0;
+      transition: opacity 1400ms ease;
+      pointer-events:none;
+    }
+    video{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      filter: contrast(1.02) saturate(1.02);
+    }
+    .vignette{
+      position:absolute; inset:0;
+      background: radial-gradient(800px 500px at 50% 40%, transparent, rgba(0,0,0,.55) 70%),
+                  linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.65));
+      pointer-events:none;
+    }
+
+    /* Start overlay */
+    .startOverlay{
+      position:absolute; inset:0;
+      display:grid; place-items:center;
+      padding:24px;
+      text-align:center;
+      z-index:10;
+      background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.75));
+      backdrop-filter: blur(6px);
+    }
+    .card{
+      width:min(720px, 92vw);
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      border-radius: 18px;
+      padding: 22px 18px;
+      box-shadow: 0 20px 70px rgba(0,0,0,.45);
+    }
+    .title{
+      font-size: clamp(22px, 3.2vw, 34px);
+      letter-spacing:.3px;
+      margin:0 0 8px;
+    }
+    .subtitle{
+      margin:0 0 18px;
+      color: var(--muted);
+      line-height:1.45;
+      font-size: 15px;
+    }
+    .btnRow{
+      display:flex; gap:10px; justify-content:center; flex-wrap:wrap;
+    }
+    button{
+      appearance:none; border:0;
+      border-radius: 999px;
+      padding: 12px 16px;
+      font-weight:650;
+      cursor:pointer;
+      transition: transform 120ms ease, opacity 120ms ease;
+    }
+    button:hover{ transform: translateY(-1px); }
+    button:active{ transform: translateY(0px); opacity:.92; }
+    .primary{
+      background: rgba(255,255,255,.92);
+      color: #0b1020;
+    }
+    .ghost{
+      background: rgba(255,255,255,.10);
+      color: rgba(255,255,255,.92);
+      border: 1px solid rgba(255,255,255,.18);
+    }
+
+    /* White fade + text scene */
+    .afterScene{
+      position:absolute; inset:0;
+      display:grid; place-items:center;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity 1600ms ease;
+      z-index:20;
+    }
+    .whiteFade{
+      position:absolute; inset:0;
+      background: var(--white);
+      opacity:0;
+      transition: opacity 1600ms ease;
+    }
+    .glow{
+      position:absolute; inset:-30%;
+      background: radial-gradient(circle at 50% 35%, rgba(255,255,255,.95), rgba(255,255,255,.55) 35%, transparent 70%);
+      opacity:0;
+      transition: opacity 2000ms ease;
+      filter: blur(6px);
+      mix-blend-mode: screen;
+    }
+
+    .textWrap{
+      position:relative;
+      width:min(920px, 92vw);
+      padding: 20px 18px;
+      text-align:center;
+      color: var(--ink);
+    }
+    .line{
+      opacity:0;
+      transform: translateY(10px);
+      transition: opacity 900ms ease, transform 900ms ease, filter 900ms ease;
+      margin: 10px 0;
+      line-height:1.25;
+      letter-spacing:.2px;
+      filter: blur(2px);
+    }
+    .line.show{
+      opacity:1;
+      transform: translateY(0);
+      filter: blur(0);
+    }
+    .big{ font-size: clamp(22px, 3.6vw, 44px); font-weight:800; }
+    .mid{ font-size: clamp(16px, 2.2vw, 24px); font-weight:650; }
+    .small{ font-size: clamp(14px, 1.8vw, 18px); font-weight:560; color: rgba(11,16,32,.78); }
+
+    .cA{ color: var(--ink); }
+    .cB{ color: #3a2a6b; }
+    .cC{ color: #8a1e2b; }
+    .cD{ color: #7a5200; }
+    .cE{ color: #0a4a5a; }
+
+    /* Subtle “heavenly” motion */
+    .particles{
+      position:absolute; inset:0;
+      opacity:0;
+      transition: opacity 1800ms ease;
+      pointer-events:none;
+      z-index:25;
+    }
+    .particle{
+      position:absolute;
+      width: 6px; height: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.85);
+      box-shadow: 0 0 20px rgba(255,255,255,.55);
+      animation: floatUp linear infinite;
+      opacity:.0;
+    }
+    @keyframes floatUp{
+      0%{ transform: translateY(30px); opacity:0; }
+      15%{ opacity:.55; }
+      70%{ opacity:.35; }
+      100%{ transform: translateY(-220px); opacity:0; }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce){
+      .videoWrap, .afterScene, .whiteFade, .glow, .line{ transition:none !important; animation:none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage">
+
+    <div class="startOverlay" id="startOverlay">
+      <div class="card">
+        <h1 class="title">Video starten</h1>
+        <p class="subtitle">
+          Dein Browser erlaubt Ton/Autoplay meist erst nach einem Klick.
+          Danach läuft alles automatisch: Video → Atmosphäre → Weißblende → Textsequenz.
+        </p>
+        <div class="btnRow">
+          <button class="primary" id="startBtn">Start</button>
+          <button class="ghost" id="startMutedBtn">Start (ohne Ton)</button>
+        </div>
+        <p class="subtitle" style="margin-top:14px;font-size:13px;">
+          Dateien neben <code>index.html</code>: <code>campaign.mp4</code> und <code>atmo.mp3</code>
+        </p>
+      </div>
+    </div>
+
+    <div class="videoWrap" id="videoWrap" aria-hidden="true">
+      <video id="vid" playsinline preload="auto">
+        <source src="campaign.mp4" type="video/mp4" />
+      </video>
+      <div class="vignette"></div>
+    </div>
+
+    <div class="afterScene" id="afterScene" aria-hidden="true">
+      <div class="whiteFade" id="whiteFade"></div>
+      <div class="glow" id="glow"></div>
+
+      <div class="particles" id="particles"></div>
+
+      <div class="textWrap" id="textWrap">
+        <!-- Lines will be injected -->
+      </div>
+    </div>
+
+    <audio id="atmo" preload="auto" loop>
+      <source src="atmo.mp3" type="audio/mpeg" />
+    </audio>
+
+  </div>
+
+  <script>
+    const startOverlay = document.getElementById('startOverlay');
+    const startBtn = document.getElementById('startBtn');
+    const startMutedBtn = document.getElementById('startMutedBtn');
+
+    const videoWrap = document.getElementById('videoWrap');
+    const vid = document.getElementById('vid');
+
+    const afterScene = document.getElementById('afterScene');
+    const whiteFade = document.getElementById('whiteFade');
+    const glow = document.getElementById('glow');
+    const textWrap = document.getElementById('textWrap');
+
+    const atmo = document.getElementById('atmo');
+    const particles = document.getElementById('particles');
+
+    // --- EDIT YOUR TEXT HERE ---
+    // I’m leaving this neutral (no direct voting persuasion).
+    // Replace with your own wording.
+    const LINES = 
+      { text: "Das war das Kampagnenvideo der Freien Demokratischen Partei zur Bundestagswahl 2025.", cls: "big cA", delay: 800 },
+      { text: "Auch ich bin Mitglied der FDP und wählte damals die Liberalen.", cls: "mid cE", delay: 2200 },
+      { text: "Doch in der Bundestagswahl 2025, fielen wir unter die 5% Hürde. Wir wurden somit aus dem Bundestag herraus geworfen.", cls: "small cA", delay: 3800 },
+      { text: "Das fehlen der Liberalen Stimme verändert das allgemeine Miteinander im Deutschen Bundestag.", cls: "mid cB", delay: 5600 },
+      { text: "Der Bundestag ist nun ein Medium für die Weitrechte und die weit Linken als Wahlmaterial für Populistische Reden.", cls: "mid cC", delay: 7400 },
+      { text: "Die Bundesregierung ist ebenfalls betroffen. Die Wirtschaft wird immer schlechter, die Preise immer Höher.", cls: "big cD", delay: 9800 },
+      { text: "Aber das kann man Retten. Am 8. März startet in Baden-Württemberg eine Landtagswahl. Ihre Stimme: FDP.", cls: "small cA", delay: 11800 }
+    ];
+
+    function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+    function buildLines(){
+      textWrap.innerHTML = "";
+      for (const item of LINES){
+        const div = document.createElement('div');
+        div.className = `line ${item.cls}`;
+        div.textContent = item.text;
+        textWrap.appendChild(div);
+      }
+    }
+
+    function spawnParticles(count = 22){
+      particles.innerHTML = "";
+      for (let i=0;i<count;i++){
+        const p = document.createElement('div');
+        p.className = "particle";
+        const left = Math.random() * 100;
+        const top = 70 + Math.random()*30; // start near bottom
+        const dur = 6 + Math.random()*6;
+        const delay = Math.random()*3;
+        const size = 3 + Math.random()*6;
+        p.style.left = left + "%";
+        p.style.top = top + "%";
+        p.style.width = size + "px";
+        p.style.height = size + "px";
+        p.style.animationDuration = dur + "s";
+        p.style.animationDelay = delay + "s";
+        particles.appendChild(p);
+      }
+    }
+
+    async function startFlow({mutedVideo}){
+      // Prep
+      startOverlay.style.display = "none";
+
+      // Video fade in
+      vid.muted = !!mutedVideo;  // muted helps autoplay reliability
+      vid.currentTime = 0;
+
+      videoWrap.style.pointerEvents = "auto";
+      videoWrap.style.opacity = "1";
+
+      try{
+        await vid.play();
+      }catch(e){
+        // If play still fails, show a minimal fallback click-to-play
+        startOverlay.style.display = "grid";
+        startOverlay.querySelector('.title').textContent = "Zum Starten klicken";
+        startOverlay.querySelector('.subtitle').textContent =
+          "Autoplay wurde blockiert. Bitte erneut klicken.";
+        return;
+      }
+
+      // Wait for video end
+      await new Promise(resolve => {
+        vid.addEventListener('ended', resolve, { once:true });
+      });
+
+      // Start ambience (loop)
+      try{
+        atmo.currentTime = 0;
+        await atmo.play();
+      }catch(e){
+        // If audio blocked, user can still proceed silently.
+      }
+
+      // Transition to white / text
+      afterScene.style.opacity = "1";
+      afterScene.style.pointerEvents = "auto";
+      whiteFade.style.opacity = "1";
+      glow.style.opacity = "1";
+
+      buildLines();
+      spawnParticles();
+      particles.style.opacity = "1";
+
+      // Show lines sequentially
+      const lineEls = Array.from(textWrap.querySelectorAll('.line'));
+      const t0 = performance.now();
+
+      for (let i=0;i<LINES.length;i++){
+        const targetAt = LINES[i].delay;
+        const now = performance.now() - t0;
+        const wait = Math.max(0, targetAt - now);
+        await sleep(wait);
+        lineEls[i].classList.add('show');
+      }
+    }
+
+    startBtn.addEventListener('click', () => startFlow({ mutedVideo:false }));
+    startMutedBtn.addEventListener('click', () => startFlow({ mutedVideo:true }));
+
+    // If the atmo audio ends for any reason, enforce looping
+    atmo.addEventListener('ended', () => {
+      atmo.currentTime = 0;
+      atmo.play().catch(()=>{});
+    });
+  </script>
+</body>
+</html>
