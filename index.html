@@ -9,14 +9,15 @@
       --bg: #05070c;
       --ink: #0b1020;
       --white: #ffffff;
-      --soft: rgba(255,255,255,.86);
-      --muted: rgba(255,255,255,.70);
 
-      --a: #ffffff;
-      --b: #f6f0ff;
-      --c: #ffe9e9;
-      --d: #fff6df;
-      --e: #dff7ff;
+      --mutedW: rgba(255,255,255,.75);
+      --cardW: rgba(255,255,255,.10);
+      --strokeW: rgba(255,255,255,.18);
+
+      /* emotional inks on white */
+      --emoSad: #7e111c;   /* deep red */
+      --emoWarn:#5b2b86;   /* violet */
+      --emoHot: #8a1e2b;   /* red/rose */
     }
 
     *{ box-sizing:border-box; }
@@ -25,23 +26,26 @@
 
     .stage{
       position:fixed; inset:0;
-      display:grid; place-items:center;
       background: radial-gradient(1200px 800px at 50% 30%, rgba(255,255,255,.06), transparent 60%),
                   linear-gradient(180deg, #060815, #02030a);
     }
 
+    /* Video layer */
     .videoWrap{
       position:absolute; inset:0;
-      display:grid; place-items:center;
       opacity:0;
-      transition: opacity 1400ms ease;
+      transition: opacity 1200ms ease;
       pointer-events:none;
+      will-change: opacity;
     }
     video{
       width:100%;
       height:100%;
       object-fit:cover;
-      filter: contrast(1.02) saturate(1.02);
+      /* keep it crisp-ish */
+      image-rendering: auto;
+      transform: translateZ(0);
+      filter: contrast(1.03) saturate(1.03);
     }
     .vignette{
       position:absolute; inset:0;
@@ -50,104 +54,161 @@
       pointer-events:none;
     }
 
-    .afterScene{
+    /* Click-to-begin overlay (blurred world behind) */
+    .gate{
       position:absolute; inset:0;
       display:grid; place-items:center;
+      z-index:30;
+      backdrop-filter: blur(16px) saturate(1.2);
+      background: rgba(0,0,0,.35);
+      transition: opacity 600ms ease;
+    }
+    .gateCard{
+      width:min(520px, 90vw);
+      padding: 18px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--strokeW);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+      box-shadow: 0 18px 70px rgba(0,0,0,.55);
+      display:grid;
+      gap:10px;
+      text-align:center;
+    }
+    .clickMe{
+      position:relative;
+      display:inline-block;
+      margin: 0 auto;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.92);
+      color: #0b1020;
+      font-weight: 800;
+      letter-spacing:.3px;
+      cursor:pointer;
+      user-select:none;
+      transform: translateZ(0);
+    }
+    .clickMe::after{
+      content:"";
+      position:absolute; inset:-10px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.55), transparent 60%);
+      filter: blur(10px);
+      opacity:.0;
+      animation: pulse 1.25s ease-in-out infinite;
+      pointer-events:none;
+    }
+    @keyframes pulse{
+      0%{ opacity:0; transform: scale(.98); }
+      50%{ opacity:.9; transform: scale(1.02); }
+      100%{ opacity:0; transform: scale(.98); }
+    }
+    .gateSub{
+      margin:0;
+      font-size: 13px;
+      color: var(--mutedW);
+      line-height:1.4;
+    }
+
+    /* White scene */
+    .afterScene{
+      position:absolute; inset:0;
       opacity:0;
       pointer-events:none;
-      transition: opacity 1600ms ease;
-      z-index:20;
+      transition: opacity 650ms ease;
+      z-index:40;
     }
     .whiteFade{
       position:absolute; inset:0;
       background: var(--white);
       opacity:0;
-      transition: opacity 1600ms ease;
-    }
-    .glow{
-      position:absolute; inset:-30%;
-      background: radial-gradient(circle at 50% 35%, rgba(255,255,255,.95), rgba(255,255,255,.55) 35%, transparent 70%);
-      opacity:0;
-      transition: opacity 2000ms ease;
-      filter: blur(6px);
-      mix-blend-mode: screen;
+      transition: opacity 850ms ease;
     }
 
-    .textWrap{
-      position:relative;
-      width:min(920px, 92vw);
-      padding: 20px 18px;
-      text-align:center;
+    /* Text stack */
+    .textStage{
+      position:absolute; inset:0;
+      display:grid;
+      place-items:center;
+      padding: 24px;
       color: var(--ink);
     }
-    .line{
+    .textBox{
+      width:min(980px, 92vw);
+      text-align:center;
+      padding: 8px 6px;
+    }
+
+    .group{
+      display:grid;
+      gap: 10px;
       opacity:0;
       transform: translateY(10px);
-      transition: opacity 900ms ease, transform 900ms ease, filter 900ms ease;
-      margin: 10px 0;
-      line-height:1.25;
-      letter-spacing:.2px;
       filter: blur(2px);
+      transition: opacity 520ms ease, transform 520ms ease, filter 520ms ease;
+      will-change: opacity, transform, filter;
     }
-    .line.show{
+    .group.show{
       opacity:1;
       transform: translateY(0);
       filter: blur(0);
     }
-    .big{ font-size: clamp(22px, 3.6vw, 44px); font-weight:800; }
-    .mid{ font-size: clamp(16px, 2.2vw, 24px); font-weight:650; }
-    .small{ font-size: clamp(14px, 1.8vw, 18px); font-weight:560; color: rgba(11,16,32,.78); }
-
-    .cA{ color: var(--ink); }
-    .cB{ color: #3a2a6b; }
-    .cC{ color: #8a1e2b; }
-    .cD{ color: #7a5200; }
-    .cE{ color: #0a4a5a; }
-
-    .particles{
-      position:absolute; inset:0;
+    .group.hide{
       opacity:0;
-      transition: opacity 1800ms ease;
-      pointer-events:none;
-      z-index:25;
+      transform: translateY(-8px);
+      filter: blur(2px);
     }
-    .particle{
+
+    .line{
+      margin:0;
+      line-height:1.18;
+      letter-spacing:.2px;
+    }
+    .lBig{ font-size: clamp(22px, 3.4vw, 44px); font-weight: 850; }
+    .lMid{ font-size: clamp(16px, 2.1vw, 26px); font-weight: 700; }
+    .lSmall{ font-size: clamp(14px, 1.7vw, 18px); font-weight: 600; opacity:.82; }
+
+    .ink{ color: var(--ink); }
+    .emoSad{ color: var(--emoSad); }
+    .emoWarn{ color: var(--emoWarn); }
+    .emoHot{ color: var(--emoHot); }
+
+    /* Final CTA pin */
+    .ctaPinned{
       position:absolute;
-      width: 6px; height: 6px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.85);
-      box-shadow: 0 0 20px rgba(255,255,255,.55);
-      animation: floatUp linear infinite;
-      opacity:0;
-    }
-    @keyframes floatUp{
-      0%{ transform: translateY(30px); opacity:0; }
-      15%{ opacity:.55; }
-      70%{ opacity:.35; }
-      100%{ transform: translateY(-220px); opacity:0; }
+      left:50%;
+      top: 18%;
+      transform: translate(-50%, -50%);
+      transition: top 800ms ease, transform 800ms ease;
     }
 
-    /* Tiny sound button (only if needed) */
-    .soundBtn{
+    /* Language switch (after video) */
+    .lang{
       position: fixed;
+      top: 14px;
       right: 14px;
-      bottom: 14px;
-      z-index: 50;
-      border: 1px solid rgba(255,255,255,.22);
-      background: rgba(255,255,255,.10);
-      color: rgba(255,255,255,.92);
-      border-radius: 999px;
-      padding: 10px 14px;
-      font-weight: 650;
-      cursor: pointer;
-      backdrop-filter: blur(6px);
+      z-index: 60;
       display:none;
+      gap: 8px;
+      align-items:center;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,.18);
+      background: rgba(255,255,255,.72);
+      backdrop-filter: blur(8px);
+      color: #0b1020;
+      font-weight: 750;
     }
-    .soundBtn:hover{ transform: translateY(-1px); }
-    .soundBtn:active{ transform: translateY(0); opacity:.92; }
+    .lang select{
+      border:0;
+      background: transparent;
+      font-weight: 750;
+      outline:none;
+      cursor:pointer;
+    }
 
     @media (prefers-reduced-motion: reduce){
-      .videoWrap, .afterScene, .whiteFade, .glow, .line{ transition:none !important; animation:none !important; }
+      .videoWrap, .gate, .whiteFade, .afterScene, .group, .clickMe::after { transition:none !important; animation:none !important; }
     }
   </style>
 </head>
@@ -161,158 +222,359 @@
       <div class="vignette"></div>
     </div>
 
-    <div class="afterScene" id="afterScene" aria-hidden="true">
-      <div class="whiteFade" id="whiteFade"></div>
-      <div class="glow" id="glow"></div>
-      <div class="particles" id="particles"></div>
-      <div class="textWrap" id="textWrap"></div>
+    <!-- Click gate -->
+    <div class="gate" id="gate">
+      <div class="gateCard">
+        <div class="clickMe" id="clickMe">Click me.</div>
+        <p class="gateSub">Ein Klick startet Video & Ton. Danach läuft alles automatisch.</p>
+      </div>
     </div>
 
-    <audio id="atmo" preload="auto">
+    <!-- White + text -->
+    <div class="afterScene" id="afterScene" aria-hidden="true">
+      <div class="whiteFade" id="whiteFade"></div>
+      <div class="textStage">
+        <div class="textBox" id="textBox"></div>
+      </div>
+    </div>
+
+    <div class="lang" id="langUI" title="Sprache">
+      <span>LANG</span>
+      <select id="langSelect">
+        <option value="de">DE</option>
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+      </select>
+    </div>
+
+    <audio id="atmo" preload="auto" loop>
       <source src="atmo.mp3" type="audio/mpeg" />
     </audio>
 
   </div>
 
-  <button class="soundBtn" id="soundBtn">Sound an</button>
-
   <script>
+    const gate = document.getElementById('gate');
+    const clickMe = document.getElementById('clickMe');
+
     const videoWrap = document.getElementById('videoWrap');
     const vid = document.getElementById('vid');
 
     const afterScene = document.getElementById('afterScene');
     const whiteFade = document.getElementById('whiteFade');
-    const glow = document.getElementById('glow');
-    const textWrap = document.getElementById('textWrap');
+    const textBox = document.getElementById('textBox');
 
     const atmo = document.getElementById('atmo');
-    const particles = document.getElementById('particles');
-    const soundBtn = document.getElementById('soundBtn');
 
-    // --- YOUR TEXT (fixed array syntax) ---
-    const LINES = [
-      { text: "Das war das Kampagnenvideo der Freien Demokratischen Partei zur Bundestagswahl 2025.", cls: "big cA", delay: 800 },
-      { text: "Auch ich bin Mitglied der FDP und wählte damals die Liberalen.", cls: "mid cE", delay: 2200 },
-      { text: "Doch in der Bundestagswahl 2025, fielen wir unter die 5% Hürde. Wir wurden somit aus dem Bundestag herraus geworfen.", cls: "small cA", delay: 3800 },
-      { text: "Das fehlen der Liberalen Stimme verändert das allgemeine Miteinander im Deutschen Bundestag.", cls: "mid cB", delay: 5600 },
-      { text: "Der Bundestag ist nun ein Medium für die Weitrechte und die weit Linken als Wahlmaterial für Populistische Reden.", cls: "mid cC", delay: 7400 },
-      { text: "Die Bundesregierung ist ebenfalls betroffen. Die Wirtschaft wird immer schlechter, die Preise immer Höher.", cls: "big cD", delay: 9800 },
-      { text: "Aber das kann man Retten. Am 8. März startet in Baden-Württemberg eine Landtagswahl. Ihre Stimme: FDP.", cls: "small cA", delay: 11800 }
+    const langUI = document.getElementById('langUI');
+    const langSelect = document.getElementById('langSelect');
+
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+    // Reading speed: adjust if you want slower/faster
+    const WORDS_PER_MIN = 210;
+    const MS_PER_WORD = 60000 / WORDS_PER_MIN;
+
+    // ---- TEXT DATA ----
+    // NOTE: I’m leaving EN/ES as placeholders: paste your own translations.
+    // Each "section" shows multiple lines together, then fades out before the next.
+    const SECTIONS = [
+      {
+        key: "s1",
+        tone: "ink",
+        lines: {
+          de: [
+            { t: "Das war das Kampagnenvideo", size:"lBig" },
+            { t: "zur Bundestagswahl 2025.", size:"lBig" }
+          ],
+          en: [
+            { t: "[Add English translation here]", size:"lBig" }
+          ],
+          es: [
+            { t: "[Añade aquí la traducción al español]", size:"lBig" }
+          ]
+        }
+      },
+      {
+        key: "s2",
+        tone: "ink",
+        lines: {
+          de: [
+            { t: "Auch ich bin Mitglied der FDP", size:"lMid" },
+            { t: "und wählte damals die Liberalen.", size:"lMid" }
+          ],
+          en: [{ t: "[...]", size:"lMid" }],
+          es: [{ t: "[...]", size:"lMid" }]
+        }
+      },
+      {
+        key: "s3",
+        tone: "emoSad",
+        lines: {
+          de: [
+            { t: "Doch bei der Bundestagswahl 2025", size:"lMid" },
+            { t: "fielen wir unter die 5%-Hürde.", size:"lMid" },
+            { t: "Damit waren wir aus dem Bundestag raus.", size:"lSmall" }
+          ],
+          en: [{ t: "[...]", size:"lMid" }],
+          es: [{ t: "[...]", size:"lMid" }]
+        }
+      },
+      {
+        key: "s4",
+        tone: "ink",
+        lines: {
+          de: [
+            { t: "Das Fehlen der liberalen Stimme", size:"lMid" },
+            { t: "verändert das Miteinander im Bundestag.", size:"lMid" }
+          ],
+          en: [{ t: "[...]", size:"lMid" }],
+          es: [{ t: "[...]", size:"lMid" }]
+        }
+      },
+      {
+        key: "s5",
+        tone: "emoWarn",
+        lines: {
+          de: [
+            { t: "Mehr Raum für Populismus.", size:"lMid" },
+            { t: "Für weit rechts und weit links", size:"lMid" },
+            { t: "als Material für große Reden.", size:"lSmall" }
+          ],
+          en: [{ t: "[...]", size:"lMid" }],
+          es: [{ t: "[...]", size:"lMid" }]
+        }
+      },
+      {
+        key: "s6",
+        tone: "ink",
+        lines: {
+          de: [
+            { t: "Auch die Regierung ist betroffen.", size:"lMid" },
+            { t: "Wirtschaft wird schwieriger,", size:"lMid" },
+            { t: "Preise steigen weiter.", size:"lMid" }
+          ],
+          en: [{ t: "[...]", size:"lMid" }],
+          es: [{ t: "[...]", size:"lMid" }]
+        }
+      },
+      {
+        // Final section: we will pin only the last line ("Appell")
+        key: "s7",
+        tone: "emoHot",
+        finalCta: true,
+        lines: {
+          de: [
+            { t: "Aber das kann man retten.", size:"lMid" },
+            { t: "Am 8. März startet in Baden-Württemberg", size:"lSmall" },
+            { t: "Deine Stimme: [DEIN APPELL HIER]", size:"lBig" }
+          ],
+          en: [{ t: "[...]", size:"lBig" }],
+          es: [{ t: "[...]", size:"lBig" }]
+        }
+      }
     ];
 
-    function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+    let currentLang = "de";
+    let hasFadedAtmoIn = false;
+    let userStarted = false;
 
-    function buildLines(){
-      textWrap.innerHTML = "";
-      for (const item of LINES){
-        const div = document.createElement('div');
-        div.className = `line ${item.cls}`;
-        div.textContent = item.text;
-        textWrap.appendChild(div);
-      }
+    function estimateHoldMs(lines){
+      // Sum words across all lines, then add a base pause
+      const words = lines
+        .map(x => (x.t || "").trim().split(/\s+/).filter(Boolean).length)
+        .reduce((a,b)=>a+b,0);
+      const base = 900;               // settle time
+      const read = words * MS_PER_WORD;
+      const extra = 900;              // breathing room
+      return Math.max(1800, base + read + extra);
     }
 
-    function spawnParticles(count = 22){
-      particles.innerHTML = "";
-      for (let i=0;i<count;i++){
-        const p = document.createElement('div');
-        p.className = "particle";
-        const left = Math.random() * 100;
-        const top = 70 + Math.random()*30;
-        const dur = 6 + Math.random()*6;
-        const delay = Math.random()*3;
-        const size = 3 + Math.random()*6;
-        p.style.left = left + "%";
-        p.style.top = top + "%";
-        p.style.width = size + "px";
-        p.style.height = size + "px";
-        p.style.animationDuration = dur + "s";
-        p.style.animationDelay = delay + "s";
-        particles.appendChild(p);
+    function renderGroup(section){
+      textBox.innerHTML = "";
+      const group = document.createElement("div");
+      group.className = "group";
+
+      const toneClass = section.tone || "ink";
+      const lines = section.lines[currentLang] || section.lines.de;
+
+      for(const ln of lines){
+        const p = document.createElement("p");
+        p.className = `line ${ln.size || "lMid"} ${toneClass}`;
+        p.textContent = ln.t;
+        group.appendChild(p);
+      }
+
+      textBox.appendChild(group);
+      return { group, lines };
+    }
+
+    async function fadeAtmoInOnce(){
+      // must be called after user interaction
+      atmo.volume = 0;
+      try{
+        atmo.currentTime = 0;
+        await atmo.play();
+      }catch(e){
+        // If this fails, audio is blocked; but with the click gate it should succeed.
+        return;
+      }
+
+      if (hasFadedAtmoIn) return;
+      hasFadedAtmoIn = true;
+
+      const target = 1.0;     // change if you want lower
+      const dur = 2200;
+      const steps = 40;
+      for (let i=1;i<=steps;i++){
+        atmo.volume = target * (i/steps);
+        await sleep(dur/steps);
+      }
+      atmo.volume = target;
+    }
+
+    async function runTextSequence(){
+      afterScene.style.opacity = "1";
+      afterScene.style.pointerEvents = "auto";
+
+      // Make white fully white, then start text
+      whiteFade.style.opacity = "1";
+      await sleep(600);
+
+      // Show language switch now (after video done)
+      langUI.style.display = "flex";
+
+      for (let i=0; i<SECTIONS.length; i++){
+        const section = SECTIONS[i];
+        const { group, lines } = renderGroup(section);
+
+        // fade in
+        await sleep(50);
+        group.classList.add("show");
+
+        // hold for reading
+        const hold = estimateHoldMs(lines);
+        await sleep(hold);
+
+        // Final CTA special behavior
+        if (section.finalCta){
+          // Fade out everything except last line, then pin it upper-middle
+          const ps = Array.from(group.querySelectorAll("p"));
+          for (let j=0; j<ps.length-1; j++){
+            ps[j].style.transition = "opacity 520ms ease, transform 520ms ease, filter 520ms ease";
+            ps[j].style.opacity = "0";
+            ps[j].style.transform = "translateY(-6px)";
+            ps[j].style.filter = "blur(2px)";
+          }
+          await sleep(620);
+
+          const last = ps[ps.length-1];
+          // Wrap/pin
+          const pin = document.createElement("div");
+          pin.className = "ctaPinned";
+          pin.appendChild(last.cloneNode(true));
+          // Clear and show pinned CTA
+          textBox.innerHTML = "";
+          textBox.appendChild(pin);
+
+          // small “tween” feel
+          pin.style.top = "50%";
+          pin.style.transform = "translate(-50%, -50%)";
+          await sleep(40);
+          pin.style.top = "18%";
+          pin.style.transform = "translate(-50%, -50%)";
+
+          // stay forever
+          return;
+        }
+
+        // fade out
+        group.classList.add("hide");
+        await sleep(620);
       }
     }
 
     async function startFlow(){
-      // Video fade in
+      if (userStarted) return;
+      userStarted = true;
+
+      // Start ambience (fade-in once) immediately after click
+      fadeAtmoInOnce().catch(()=>{});
+
+      // Unblur gate + show video
+      gate.style.opacity = "0";
+      await sleep(450);
+      gate.style.display = "none";
+
       videoWrap.style.opacity = "1";
 
-      // Autoplay reliability: start muted.
-      vid.muted = true;
+      // Autoplay reliability: start muted; user click unlocks unmuting if you want it.
+      // If you want video sound too, set muted=false AFTER click and after play succeeds.
       vid.currentTime = 0;
 
-      // Try to play
       try{
         await vid.play();
       }catch(e){
-        // If autoplay fails completely, allow a single click anywhere to start.
-        const clickStart = async () => {
-          document.removeEventListener('pointerdown', clickStart);
-          try{ await vid.play(); }catch(_){}
-        };
-        document.addEventListener('pointerdown', clickStart, { once:true });
+        // Fallback: if play still fails for some reason, allow another click
+        gate.style.display = "grid";
+        gate.style.opacity = "1";
+        userStarted = false;
+        return;
       }
-
-      // Offer sound enable (optional)
-      soundBtn.style.display = "block";
-      soundBtn.addEventListener('click', async () => {
-        // This click counts as a user gesture; now audio/video unmute is allowed.
-        try{
-          vid.muted = false;
-        }catch(_){}
-        soundBtn.style.display = "none";
-      }, { once:true });
 
       // Wait for video end
-      await new Promise(resolve => vid.addEventListener('ended', resolve, { once:true }));
+      await new Promise(resolve => vid.addEventListener("ended", resolve, { once:true }));
 
-      // Try to play ambience (may be blocked unless user clicked Sound an / anywhere)
-      let atmoPlayed = false;
-      try{
-        atmo.currentTime = 0;
-        await atmo.play();
-        atmoPlayed = true;
-      }catch(e){
-        // If blocked, show button again to enable and play.
-        soundBtn.textContent = "Sound an";
-        soundBtn.style.display = "block";
-        soundBtn.onclick = async () => {
-          soundBtn.style.display = "none";
-          try{
-            atmo.currentTime = 0;
-            await atmo.play();
-            atmoPlayed = true;
-          }catch(_){}
-        };
-      }
-
-      // If the audio is playing, wait until it ends; otherwise continue immediately.
-      if (atmoPlayed){
-        await new Promise(resolve => atmo.addEventListener('ended', resolve, { once:true }));
-      }
-
-      // Transition to white / text
-      afterScene.style.opacity = "1";
-      whiteFade.style.opacity = "1";
-      glow.style.opacity = "1";
-
-      buildLines();
-      spawnParticles();
-      particles.style.opacity = "1";
-
-      // Show lines sequentially
-      const lineEls = Array.from(textWrap.querySelectorAll('.line'));
-      const t0 = performance.now();
-
-      for (let i=0;i<LINES.length;i++){
-        const targetAt = LINES[i].delay;
-        const now = performance.now() - t0;
-        const wait = Math.max(0, targetAt - now);
-        await sleep(wait);
-        lineEls[i].classList.add('show');
-      }
+      // Immediately fade to white and start text sequence
+      await runTextSequence();
     }
 
-    window.addEventListener('DOMContentLoaded', startFlow);
+    // Click gate triggers everything (also unlocks audio in browsers)
+    clickMe.addEventListener("click", startFlow);
+    gate.addEventListener("click", (e) => {
+      // allow clicking anywhere on the gate, not just the button
+      if (e.target === gate) startFlow();
+    });
+
+    // Language switching after video
+    langSelect.addEventListener("change", () => {
+      currentLang = langSelect.value;
+
+      // If we’re in the middle of text, we just re-render the currently shown block instantly.
+      // (We’re not restarting the whole timing to keep it simple.)
+      const existingGroup = textBox.querySelector(".group");
+      if (existingGroup){
+        // find which section is currently displayed by matching text content (best-effort)
+        // simpler: just rebuild from the first line match
+        // If you want perfect tracking, we can add a global "activeSectionIndex".
+        const displayed = existingGroup.textContent.trim();
+        const section = SECTIONS.find(s => (s.lines.de?.some(l => displayed.includes(l.t)) ));
+        if (section){
+          const { group } = renderGroup(section);
+          group.classList.add("show");
+        }
+      } else {
+        // If CTA pinned, rebuild pinned CTA in chosen lang
+        const pinned = textBox.querySelector(".ctaPinned");
+        if (pinned){
+          const final = SECTIONS.find(s => s.finalCta);
+          const lines = (final.lines[currentLang] || final.lines.de);
+          const last = lines[lines.length-1];
+          pinned.innerHTML = "";
+          const p = document.createElement("p");
+          p.className = `line ${last.size || "lBig"} ${final.tone || "ink"}`;
+          p.textContent = last.t;
+          pinned.appendChild(p);
+        }
+      }
+    });
+
+    // Preload hint: show first frame ASAP (paused, muted)
+    window.addEventListener("DOMContentLoaded", () => {
+      // Ensure video is ready behind blur
+      vid.muted = true;
+      vid.load();
+    });
   </script>
 </body>
 </html>
