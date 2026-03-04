@@ -11,7 +11,6 @@
       --white: #ffffff;
 
       --mutedW: rgba(255,255,255,.75);
-      --cardW: rgba(255,255,255,.10);
       --strokeW: rgba(255,255,255,.18);
 
       /* emotional inks on white */
@@ -34,7 +33,7 @@
     .videoWrap{
       position:absolute; inset:0;
       opacity:0;
-      transition: opacity 1200ms ease;
+      transition: opacity 1100ms ease;
       pointer-events:none;
       will-change: opacity;
     }
@@ -42,8 +41,7 @@
       width:100%;
       height:100%;
       object-fit:cover;
-      /* keep it crisp-ish */
-      image-rendering: auto;
+      image-rendering:auto;
       transform: translateZ(0);
       filter: contrast(1.03) saturate(1.03);
     }
@@ -54,7 +52,7 @@
       pointer-events:none;
     }
 
-    /* Click-to-begin overlay (blurred world behind) */
+    /* Click gate (blurred world behind) */
     .gate{
       position:absolute; inset:0;
       display:grid; place-items:center;
@@ -94,7 +92,7 @@
       border-radius: 999px;
       background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.55), transparent 60%);
       filter: blur(10px);
-      opacity:.0;
+      opacity:0;
       animation: pulse 1.25s ease-in-out infinite;
       pointer-events:none;
     }
@@ -110,22 +108,21 @@
       line-height:1.4;
     }
 
-    /* White scene */
+    /* White + text */
     .afterScene{
       position:absolute; inset:0;
       opacity:0;
       pointer-events:none;
-      transition: opacity 650ms ease;
+      transition: opacity 550ms ease;
       z-index:40;
     }
     .whiteFade{
       position:absolute; inset:0;
       background: var(--white);
       opacity:0;
-      transition: opacity 850ms ease;
+      transition: opacity 800ms ease;
     }
 
-    /* Text stack */
     .textStage{
       position:absolute; inset:0;
       display:grid;
@@ -216,7 +213,8 @@
   <div class="stage" id="stage">
 
     <div class="videoWrap" id="videoWrap" aria-hidden="true">
-      <video id="vid" playsinline preload="auto" muted>
+      <!-- NOTE: no "muted" attribute; video audio should play after click -->
+      <video id="vid" playsinline preload="auto">
         <source src="campaign.mp4" type="video/mp4" />
       </video>
       <div class="vignette"></div>
@@ -226,7 +224,7 @@
     <div class="gate" id="gate">
       <div class="gateCard">
         <div class="clickMe" id="clickMe">Click me.</div>
-        <p class="gateSub">Ein Klick startet Video & Ton. Danach läuft alles automatisch.</p>
+        <p class="gateSub">Ein Klick startet das Video. Danach läuft alles automatisch.</p>
       </div>
     </div>
 
@@ -247,6 +245,7 @@
       </select>
     </div>
 
+    <!-- Atmo plays ONLY after video ends -->
     <audio id="atmo" preload="auto" loop>
       <source src="atmo.mp3" type="audio/mpeg" />
     </audio>
@@ -271,13 +270,23 @@
 
     const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-    // Reading speed: adjust if you want slower/faster
+    // Reading speed
     const WORDS_PER_MIN = 210;
     const MS_PER_WORD = 60000 / WORDS_PER_MIN;
 
+    // Fade-in once flag
+    let hasFadedAtmoIn = false;
+
+    // Text language
+    let currentLang = "de";
+
+    // Track which section is on screen so language switch can re-render correctly
+    let activeSectionIndex = -1;
+    let isFinalPinned = false;
+
     // ---- TEXT DATA ----
-    // NOTE: I’m leaving EN/ES as placeholders: paste your own translations.
-    // Each "section" shows multiple lines together, then fades out before the next.
+    // DE is your structure. EN/ES are placeholders you can fill with YOUR wording.
+    // (I can translate non-persuasive text if you paste it.)
     const SECTIONS = [
       {
         key: "s1",
@@ -288,10 +297,10 @@
             { t: "zur Bundestagswahl 2025.", size:"lBig" }
           ],
           en: [
-            { t: "[Add English translation here]", size:"lBig" }
+            { t: "[Paste English text here]", size:"lBig" }
           ],
           es: [
-            { t: "[Añade aquí la traducción al español]", size:"lBig" }
+            { t: "[Pega aquí el texto en español]", size:"lBig" }
           ]
         }
       },
@@ -300,8 +309,8 @@
         tone: "ink",
         lines: {
           de: [
-            { t: "Auch ich bin Mitglied der FDP", size:"lMid" },
-            { t: "und wählte damals die Liberalen.", size:"lMid" }
+            { t: "Hier kommt der nächste Abschnitt", size:"lMid" },
+            { t: "in mehreren kurzen Zeilen.", size:"lMid" }
           ],
           en: [{ t: "[...]", size:"lMid" }],
           es: [{ t: "[...]", size:"lMid" }]
@@ -312,9 +321,9 @@
         tone: "emoSad",
         lines: {
           de: [
-            { t: "Doch bei der Bundestagswahl 2025", size:"lMid" },
-            { t: "fielen wir unter die 5%-Hürde.", size:"lMid" },
-            { t: "Damit waren wir aus dem Bundestag raus.", size:"lSmall" }
+            { t: "Ein emotionaler Abschnitt", size:"lMid" },
+            { t: "bekommt eine emotionale Farbe.", size:"lMid" },
+            { t: "Der Rest bleibt neutral.", size:"lSmall" }
           ],
           en: [{ t: "[...]", size:"lMid" }],
           es: [{ t: "[...]", size:"lMid" }]
@@ -322,11 +331,11 @@
       },
       {
         key: "s4",
-        tone: "ink",
+        tone: "emoWarn",
         lines: {
           de: [
-            { t: "Das Fehlen der liberalen Stimme", size:"lMid" },
-            { t: "verändert das Miteinander im Bundestag.", size:"lMid" }
+            { t: "Noch ein Abschnitt", size:"lMid" },
+            { t: "mit einer anderen Emotion.", size:"lMid" }
           ],
           en: [{ t: "[...]", size:"lMid" }],
           es: [{ t: "[...]", size:"lMid" }]
@@ -334,60 +343,53 @@
       },
       {
         key: "s5",
-        tone: "emoWarn",
-        lines: {
-          de: [
-            { t: "Mehr Raum für Populismus.", size:"lMid" },
-            { t: "Für weit rechts und weit links", size:"lMid" },
-            { t: "als Material für große Reden.", size:"lSmall" }
-          ],
-          en: [{ t: "[...]", size:"lMid" }],
-          es: [{ t: "[...]", size:"lMid" }]
-        }
-      },
-      {
-        key: "s6",
         tone: "ink",
         lines: {
           de: [
-            { t: "Auch die Regierung ist betroffen.", size:"lMid" },
-            { t: "Wirtschaft wird schwieriger,", size:"lMid" },
-            { t: "Preise steigen weiter.", size:"lMid" }
+            { t: "Ein neutraler Abschnitt.", size:"lMid" },
+            { t: "Kurz, lesbar, dann fade-out.", size:"lSmall" }
           ],
           en: [{ t: "[...]", size:"lMid" }],
           es: [{ t: "[...]", size:"lMid" }]
         }
       },
       {
-        // Final section: we will pin only the last line ("Appell")
-        key: "s7",
+        // Final section: pins the last line
+        key: "s6",
         tone: "emoHot",
         finalCta: true,
         lines: {
           de: [
-            { t: "Aber das kann man retten.", size:"lMid" },
-            { t: "Am 8. März startet in Baden-Württemberg", size:"lSmall" },
-            { t: "Deine Stimme: [DEIN APPELL HIER]", size:"lBig" }
+            { t: "Letzter Abschnitt.", size:"lMid" },
+            { t: "Hier steht deine Überleitung.", size:"lSmall" },
+            { t: "DEIN APPELL HIER", size:"lBig" }
           ],
-          en: [{ t: "[...]", size:"lBig" }],
-          es: [{ t: "[...]", size:"lBig" }]
+          en: [
+            { t: "[...]", size:"lMid" },
+            { t: "[...]", size:"lSmall" },
+            { t: "[YOUR FINAL LINE HERE]", size:"lBig" }
+          ],
+          es: [
+            { t: "[...]", size:"lMid" },
+            { t: "[...]", size:"lSmall" },
+            { t: "[TU FRASE FINAL AQUÍ]", size:"lBig" }
+          ]
         }
       }
     ];
 
-    let currentLang = "de";
-    let hasFadedAtmoIn = false;
-    let userStarted = false;
-
     function estimateHoldMs(lines){
-      // Sum words across all lines, then add a base pause
       const words = lines
         .map(x => (x.t || "").trim().split(/\s+/).filter(Boolean).length)
         .reduce((a,b)=>a+b,0);
-      const base = 900;               // settle time
+      const base = 900;
       const read = words * MS_PER_WORD;
-      const extra = 900;              // breathing room
+      const extra = 900;
       return Math.max(1800, base + read + extra);
+    }
+
+    function getLinesFor(section){
+      return section.lines[currentLang] || section.lines.de;
     }
 
     function renderGroup(section){
@@ -396,7 +398,7 @@
       group.className = "group";
 
       const toneClass = section.tone || "ink";
-      const lines = section.lines[currentLang] || section.lines.de;
+      const lines = getLinesFor(section);
 
       for(const ln of lines){
         const p = document.createElement("p");
@@ -409,21 +411,51 @@
       return { group, lines };
     }
 
+    function renderPinnedCTA(finalSection){
+      isFinalPinned = true;
+      textBox.innerHTML = "";
+
+      const lines = getLinesFor(finalSection);
+      const last = lines[lines.length - 1];
+
+      const pin = document.createElement("div");
+      pin.className = "ctaPinned";
+
+      const p = document.createElement("p");
+      p.className = `line ${last.size || "lBig"} ${finalSection.tone || "ink"}`;
+      p.textContent = last.t;
+
+      pin.appendChild(p);
+      textBox.appendChild(pin);
+
+      // tween from center to upper-middle
+      pin.style.top = "50%";
+      pin.style.transform = "translate(-50%, -50%)";
+      requestAnimationFrame(() => {
+        pin.style.top = "18%";
+        pin.style.transform = "translate(-50%, -50%)";
+      });
+    }
+
     async function fadeAtmoInOnce(){
-      // must be called after user interaction
-      atmo.volume = 0;
+      // Start atmo (loop) and fade it in only the first time it ever starts
+      if (!hasFadedAtmoIn){
+        atmo.volume = 0;
+      }
+      atmo.currentTime = 0;
+
       try{
-        atmo.currentTime = 0;
         await atmo.play();
       }catch(e){
-        // If this fails, audio is blocked; but with the click gate it should succeed.
+        // If this fails, browser blocked audio; but since we started from a click,
+        // it should generally work.
         return;
       }
 
       if (hasFadedAtmoIn) return;
       hasFadedAtmoIn = true;
 
-      const target = 1.0;     // change if you want lower
+      const target = 1.0; // set lower if desired
       const dur = 2200;
       const steps = 40;
       for (let i=1;i<=steps;i++){
@@ -437,28 +469,30 @@
       afterScene.style.opacity = "1";
       afterScene.style.pointerEvents = "auto";
 
-      // Make white fully white, then start text
+      // fade to white
       whiteFade.style.opacity = "1";
       await sleep(600);
 
-      // Show language switch now (after video done)
+      // show language selector only after the video is done
       langUI.style.display = "flex";
 
+      // start atmo now (NOT during video)
+      fadeAtmoInOnce().catch(()=>{});
+
       for (let i=0; i<SECTIONS.length; i++){
+        activeSectionIndex = i;
         const section = SECTIONS[i];
-        const { group, lines } = renderGroup(section);
 
-        // fade in
-        await sleep(50);
-        group.classList.add("show");
-
-        // hold for reading
-        const hold = estimateHoldMs(lines);
-        await sleep(hold);
-
-        // Final CTA special behavior
+        // Final pinned CTA
         if (section.finalCta){
-          // Fade out everything except last line, then pin it upper-middle
+          const { group, lines } = renderGroup(section);
+          await sleep(50);
+          group.classList.add("show");
+
+          // Hold while user reads the setup
+          await sleep(estimateHoldMs(lines));
+
+          // Fade out all but last line
           const ps = Array.from(group.querySelectorAll("p"));
           for (let j=0; j<ps.length-1; j++){
             ps[j].style.transition = "opacity 520ms ease, transform 520ms ease, filter 520ms ease";
@@ -468,25 +502,19 @@
           }
           await sleep(620);
 
-          const last = ps[ps.length-1];
-          // Wrap/pin
-          const pin = document.createElement("div");
-          pin.className = "ctaPinned";
-          pin.appendChild(last.cloneNode(true));
-          // Clear and show pinned CTA
-          textBox.innerHTML = "";
-          textBox.appendChild(pin);
-
-          // small “tween” feel
-          pin.style.top = "50%";
-          pin.style.transform = "translate(-50%, -50%)";
-          await sleep(40);
-          pin.style.top = "18%";
-          pin.style.transform = "translate(-50%, -50%)";
-
-          // stay forever
+          // Pin CTA and stay there forever
+          renderPinnedCTA(section);
           return;
         }
+
+        const { group, lines } = renderGroup(section);
+
+        // fade in
+        await sleep(50);
+        group.classList.add("show");
+
+        // hold
+        await sleep(estimateHoldMs(lines));
 
         // fade out
         group.classList.add("hide");
@@ -494,85 +522,64 @@
       }
     }
 
+    let started = false;
+
     async function startFlow(){
-      if (userStarted) return;
-      userStarted = true;
+      if (started) return;
+      started = true;
 
-      // Start ambience (fade-in once) immediately after click
-      fadeAtmoInOnce().catch(()=>{});
-
-      // Unblur gate + show video
+      // Remove gate
       gate.style.opacity = "0";
       await sleep(450);
       gate.style.display = "none";
 
+      // Show video (fade in)
       videoWrap.style.opacity = "1";
 
-      // Autoplay reliability: start muted; user click unlocks unmuting if you want it.
-      // If you want video sound too, set muted=false AFTER click and after play succeeds.
+      // Ensure video audio is allowed (click gesture) and not muted
+      vid.muted = false;
       vid.currentTime = 0;
 
       try{
         await vid.play();
       }catch(e){
-        // Fallback: if play still fails for some reason, allow another click
+        // If it still fails, re-open gate
         gate.style.display = "grid";
         gate.style.opacity = "1";
-        userStarted = false;
+        started = false;
         return;
       }
 
       // Wait for video end
       await new Promise(resolve => vid.addEventListener("ended", resolve, { once:true }));
 
-      // Immediately fade to white and start text sequence
+      // Immediately proceed to white/text (and start atmo there)
       await runTextSequence();
     }
 
-    // Click gate triggers everything (also unlocks audio in browsers)
+    // Start triggers (click anywhere on gate)
     clickMe.addEventListener("click", startFlow);
-    gate.addEventListener("click", (e) => {
-      // allow clicking anywhere on the gate, not just the button
-      if (e.target === gate) startFlow();
-    });
+    gate.addEventListener("click", (e) => { if (e.target === gate) startFlow(); });
 
-    // Language switching after video
+    // Language switching after video: re-render current section / pinned CTA
     langSelect.addEventListener("change", () => {
       currentLang = langSelect.value;
 
-      // If we’re in the middle of text, we just re-render the currently shown block instantly.
-      // (We’re not restarting the whole timing to keep it simple.)
-      const existingGroup = textBox.querySelector(".group");
-      if (existingGroup){
-        // find which section is currently displayed by matching text content (best-effort)
-        // simpler: just rebuild from the first line match
-        // If you want perfect tracking, we can add a global "activeSectionIndex".
-        const displayed = existingGroup.textContent.trim();
-        const section = SECTIONS.find(s => (s.lines.de?.some(l => displayed.includes(l.t)) ));
-        if (section){
-          const { group } = renderGroup(section);
-          group.classList.add("show");
-        }
-      } else {
-        // If CTA pinned, rebuild pinned CTA in chosen lang
-        const pinned = textBox.querySelector(".ctaPinned");
-        if (pinned){
-          const final = SECTIONS.find(s => s.finalCta);
-          const lines = (final.lines[currentLang] || final.lines.de);
-          const last = lines[lines.length-1];
-          pinned.innerHTML = "";
-          const p = document.createElement("p");
-          p.className = `line ${last.size || "lBig"} ${final.tone || "ink"}`;
-          p.textContent = last.t;
-          pinned.appendChild(p);
-        }
+      if (isFinalPinned){
+        const final = SECTIONS.find(s => s.finalCta);
+        renderPinnedCTA(final);
+        return;
+      }
+
+      if (activeSectionIndex >= 0){
+        const section = SECTIONS[activeSectionIndex];
+        const { group } = renderGroup(section);
+        group.classList.add("show");
       }
     });
 
-    // Preload hint: show first frame ASAP (paused, muted)
+    // Preload hint: let the browser buffer video behind blur
     window.addEventListener("DOMContentLoaded", () => {
-      // Ensure video is ready behind blur
-      vid.muted = true;
       vid.load();
     });
   </script>
